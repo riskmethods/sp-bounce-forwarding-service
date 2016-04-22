@@ -98,10 +98,15 @@ app.get('/webhook', function(request, response) {
   let appUrl = 'https://' + request.hostname + '/message';
   getWebhooks()
     .then(function(webhooks) {
+      let found = false;
       for (var i in webhooks) {
         if (webhooks[i].target === appUrl) {
+          found = true;
           break;
         }
+      }
+      if (!found) {
+        return response.sendStatus(404);
       }
       return response.status(200).json({app_url: appUrl});
     })
