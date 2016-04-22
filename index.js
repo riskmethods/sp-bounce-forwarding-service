@@ -144,11 +144,17 @@ app.post('/message', function(request, response) {
   }
 
   try {
-    let bodyData = JSON.parse(JSON.stringify(request.body))
-      , eventData = bodyData.results[0].msys.message_event
+    let body = JSON.parse(JSON.stringify(request.body))
       , plainNode = new BuildMail('text/plain')
       , statusNode = new BuildMail('message/delivery-status')
       , mixedNode = new BuildMail('multipart/mixed');
+
+    if (!body.hasOwnProperty('msys') || !body.msys.hasOwnProperty('message_event')) {
+      // Respond with success to SparkPost's endpoint test
+      return response.status(200).send('OK');
+    }
+
+    let eventData = body.msys.message_event;
 
     plainNode.setContent('This message was created automatically by the mail system.\n'
       + 'A message that you sent could not be delivered to one or more of its\n'
@@ -157,7 +163,7 @@ app.post('/message', function(request, response) {
       + '\n\n'
       + eventData.raw_reason
       + '\n\n'
-      + JSON.stringify(bodyData, null, '  ')
+      + JSON.stringify(body, null, '  ')
       + '\n'
     );
 
