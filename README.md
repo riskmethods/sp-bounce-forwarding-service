@@ -9,7 +9,7 @@ Deployment
 
 Start by clicking on the following button:
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/SparkPost/sp-forwarding-service)
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/SparkPost/sp-bounce-forwarding-service)
 
 Once the deployment completes click on the "View" button under "Your app
 was successfully deployed". (Alternatively browse to
