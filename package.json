@@ -1,0 +1,37 @@
+{
+  "name": "sp-bounce-forwarding-service",
+  "version": "0.1.0",
+  "description": "A small Heroku service that will consume webhook POSTs for out-of-band bounces and forward them through the Transmissions API to a mailbox.",
+  "main": "index.js",
+  "scripts": {
+    "jscs": "jscs *.js",
+    "jshint": "jshint *.js",
+    "lint": "npm run jscs && npm run jshint",
+    "postinstall": "node_modules/.bin/bower install",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "SparkPost",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:SparkPost/sp-bounce-forwarding-service.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SparkPost/sp-bounce-forwarding-service/issues"
+  },
+  "homepage": "https://github.com/SparkPost/sp-bounce-forwarding-service",
+  "dependencies": {
+    "body-parser": "^1.15.0",
+    "bower": "^1.7.7",
+    "express": "^4.13.4",
+    "mailcomposer": "^3.7.0",
+    "q": "^1.4.1",
+    "redis": "^2.5.0-1",
+    "request": "^2.69.0",
+    "sparkpost": "1.3.2"
+  },
+  "devDependencies": {
+    "jscs": "latest",
+    "jshint": "latest"
+  }
+}

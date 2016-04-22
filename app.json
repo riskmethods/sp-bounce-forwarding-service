@@ -1,0 +1,25 @@
+{
+  "name": "SparkPost Bounce Forwarding Service",
+  "description": "A small Heroku service that will consume webhook POSTs for out-of-band bounces and forward them through the Transmissions API to a mailbox.",
+  "keywords": [
+    "sparkpost",
+    "email"
+  ],
+  "website": "https://developers.sparkpost.com",
+  "repository": "https://github.com/SparkPost/sp-bounce-forwarding-service",
+  "logo": "https://developers.sparkpost.com/images/logo-sparkpost.png",
+  "success_url": "/index.html",
+  "env": {
+    "FORWARD_FROM": {
+      "description": "The email address from which bounce messages are sent.",
+      "value": "mailer-daemon@sparkpostbox.com"
+    },
+    "FORWARD_TO": {
+      "description": "The email address to which bounce messages are sent."
+    }
+  },
+  "addons": [
+    "heroku-redis",
+    "sparkpost"
+  ]
+}
