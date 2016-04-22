@@ -122,13 +122,6 @@ app.get('/webhook', function(request, response) {
  */
 
 app.post('/webhook', function(request, response) {
-  /*
-  try {
-    let data = JSON.parse(JSON.stringify(request.body));
-  } catch (e) {
-    return response.status(400).json({err: 'Invalid data'});
-  }
-  */
   let appUrl = 'https://' + request.hostname + '/message';
   addWebhook(appUrl)
     .then(function() {
@@ -221,7 +214,7 @@ function addWebhook(appUrl) {
   return q.Promise(function(resolve, reject) {
     sp.webhooks.create({
       target: appUrl,
-      name: 'Bounce Forwarding Service',
+      name: 'Bounce Forwarder',
       auth_token: '1234567890qwertyuio', // TODO do this properly
       events: ['bounce','out_of_band']
     }, function(err) {
