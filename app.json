@@ -1,5 +1,5 @@
 {
-  "name": "SparkPost Bounce Forwarding Service",
+  "name": "SparkPost Bounce Forwarder",
   "description": "A small Heroku service that will consume webhook POSTs for out-of-band bounces and forward them through the Transmissions API to a mailbox.",
   "keywords": [
     "sparkpost",
