@@ -1,7 +1,8 @@
 'use strict';
 
 let q = require('q')
-  , mailcomposer = require('mailcomposer')
+  , BuildMail = require('buildmail')
+  , rfc822Date = require('rfc822-date')
   , express = require('express')
   , app = express()
   , bodyParser = require('body-parser')
@@ -145,21 +146,43 @@ app.post('/message', function(request, response) {
   }
 
   try {
-    let bodyString = JSON.stringify(request.body)
-      , eventData = JSON.parse(bodyString).results[0].msys.message_event
-      , mail = mailcomposer({
-      from: 'Mail Delivery System <' + process.env.FORWARD_FROM + '>',
-      to: process.env.FORWARD_TO,
-      subject: 'Mail Delivery Failure',
-      messageId: eventData.message_id,
-      headers: [
-        { key: 'X-Foo', value: 'bar' }
-      ],
-      text: bodyString,
-      html: ''
+    let bodyData = JSON.parse(JSON.stringify(request.body))
+      , eventData = bodyData.results[0].msys.message_event
+      , plainNode = new BuildMail('text/plain')
+      , statusNode = new BuildMail('message/delivery-status')
+      , mixedNode = new BuildMail('multipart/mixed');
+
+    plainNode.setContent('This message was created automatically by the mail system.\n'
+      + 'A message that you sent could not be delivered to one or more of its\n'
+      + 'recipients. This is a permanent error. The following address(es) failed:\n\n'
+      + eventData.raw_rcpt_to
+      + '\n\n'
+      + eventData.raw_reason
+      + '\n\n'
+      + JSON.stringify(bodyData, null, '  ')
+      + '\n'
+    );
+
+    statusNode.setContent('Arrival-Date: ' + rfc822Date(new Date()) + '\n'
+      + 'Reporting-MTA: dns; ' + request.hostname + '\n'
+      + '\n'
+      + 'Action: failed\n'
+      + 'Diagnostic-Code: smtp; ' + eventData.error_code + ' ' + eventData.reason + '\n'
+      + 'Last-Attempt-Date: ' + rfc822Date(new Date(eventData.timestamp * 1000)) + '\n'
+      + 'Final-Recipient: rfc822; ' + eventData.raw_rcpt_to + '\n'
+    );
+
+    mixedNode.addHeader({
+      From: 'Mail Delivery System <' + process.env.FORWARD_FROM + '>',
+      To: process.env.FORWARD_TO,
+      Subject: 'Mail Delivery Failure',
+      'Message-ID': eventData.message_id
     });
 
-    mail.build(function(err, msg) {
+    mixedNode.appendChild(plainNode);
+    mixedNode.appendChild(statusNode);
+
+    mixedNode.build(function(err, msg) {
       if (err) {
         console.error('Failed to build bounce message: ' + err);
       } else {
