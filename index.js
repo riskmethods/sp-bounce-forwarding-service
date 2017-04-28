@@ -233,9 +233,10 @@ app.post('/message', function(request, response) {
         }
       }
     }
-    console.log('Webhook events processed: bounce=', bounceCounter, 'other valid=', otherCounter, 'unrecognized=', unrecCounter);
+    let logstr = 'Webhook events processed: bounce=' + bounceCounter.toString() + ' other valid=' + otherCounter.toString() + ' unrecognized=' + unrecCounter.toString();
+    console.log(logstr);
 
-    return response.status(200).send('OK');
+    return response.status(200).send('OK:' + logstr);
   } catch (e) {
     return response.status(400).send('Invalid data: ' + e);
   }
