@@ -59,21 +59,21 @@ publisher.on('ready', function() {
 subscriber.subscribe('queue');
 
 subscriber.on('message', function(channel, message) {
-  sp.transmissions.send({
-    transmissionBody: {
-      content: {
-        email_rfc822: message
-      },
-      recipients: [{address: {email: process.env.FORWARD_TO}}]
-    }
-  }, function(err, res) {
-    if (err) {
-      console.error('Transmission failed: ' + JSON.stringify(err));
-    } else {
-      console.log('Transmission succeeded: ' + JSON.stringify(res.body));
-    }
+    sp.transmissions.send({
+      transmissionBody: {
+        content: {
+          email_rfc822: message
+        },
+        recipients: [{address: {email: process.env.FORWARD_TO}}]
+      }
+    }, function(err, res) {
+      if (err) {
+        console.error('Transmission failed: ' + JSON.stringify(err));
+      } else {
+        console.log('Transmission succeeded: ' + JSON.stringify(res.body));
+      }
+    });
   });
-});
 
 /*
  * Set up Express
@@ -138,67 +138,109 @@ app.post('/webhook', function(request, response) {
  * returned immediately.
  */
 
+//TODO: check and dedup batches, using http header X-Messagesystems-Batch-Id:
 app.post('/message', function(request, response) {
   if (!subscriberReady || !publisherReady) {
     return response.status(500).send('Not ready');
   }
 
   try {
-    let body = JSON.parse(JSON.stringify(request.body))
-      , plainNode = new BuildMail('text/plain')
-      , statusNode = new BuildMail('message/delivery-status')
-      , mixedNode = new BuildMail('multipart/mixed');
+    let body = JSON.parse(JSON.stringify(request.body));
+    var bounceCounter = 0;
+    var otherCounter = 0;
+    var unrecCounter = 0;
 
-    if (!body.hasOwnProperty('msys') || !body.msys.hasOwnProperty('message_event')) {
-      // Respond with success to SparkPost's endpoint test
-      return response.status(200).send('OK');
+    // Update: SparkPost now always sends an array, even the empty test probe.  Fully decode message events for counter reporting.
+    if (!Array.isArray(body)) {
+      return response.status(406).send('Unrecognised SparkPost webhooks format. Ignored.');
     }
-
-    let eventData = body.msys.message_event;
-
-    plainNode.setContent('This message was created automatically by the mail system.\n'
-      + 'A message that you sent could not be delivered to one or more of its\n'
-      + 'recipients. This is a permanent error. The following address(es) failed:\n\n'
-      + eventData.raw_rcpt_to
-      + '\n\n'
-      + eventData.raw_reason
-      + '\n\n'
-      + JSON.stringify(body, null, '  ')
-      + '\n'
-    );
-
-    statusNode.setContent('Arrival-Date: ' + rfc822Date(new Date()) + '\n'
-      + 'Reporting-MTA: dns; ' + request.hostname + '\n'
-      + '\n'
-      + 'Action: failed\n'
-      + 'Diagnostic-Code: smtp; ' + eventData.error_code + ' ' + eventData.reason + '\n'
-      + 'Last-Attempt-Date: ' + rfc822Date(new Date(eventData.timestamp * 1000)) + '\n'
-      + 'Final-Recipient: rfc822; ' + eventData.raw_rcpt_to + '\n'
-    );
-
-    mixedNode.addHeader({
-      From: 'Mail Delivery System <' + process.env.FORWARD_FROM + '>',
-      To: process.env.FORWARD_TO,
-      Subject: 'Mail Delivery Failure',
-      'Message-ID': eventData.message_id
-    });
-
-    mixedNode.appendChild(plainNode);
-    mixedNode.appendChild(statusNode);
-
-    mixedNode.build(function(err, msg) {
-      if (err) {
-        console.error('Failed to build bounce message: ' + err);
+    for (let ev of body) {
+      if (!ev.hasOwnProperty('msys')) {
+        return response.status(406).send('SparkPost webhooks "msys" attribute missing in event JSON. Ignored.');
       } else {
-        publisher.publish('queue', msg.toString());
+        let ed = ev.msys;
+        if (ed.hasOwnProperty('message_event')) {
+          let eventData = ed.message_event;
+          switch (eventData.type) {
+            case 'bounce':
+            case 'out_of_band':
+              if (eventData.raw_rcpt_to == process.env.FORWARD_TO) {
+                console.log('Warning: circular bounce event to env FORWARD_TO reporting address ' + eventData.raw_rcpt_to + ' suppressed');
+              } else {
+                bounceCounter++;
+                let plainNode = new BuildMail('text/plain')
+                   , statusNode = new BuildMail('message/delivery-status')
+                   , mixedNode = new BuildMail('multipart/mixed');
+
+                plainNode.setContent('This message was created automatically by the mail system.\n'
+                  + 'A message that you sent could not be delivered to one or more of its\n'
+                  + 'recipients. This is a permanent error. The following address(es) failed:\n\n'
+                  + eventData.raw_rcpt_to
+                  + '\n\n'
+                  + eventData.raw_reason
+                  + '\n\n'
+                  + JSON.stringify(eventData, null, '  ')
+                  + '\n'
+                );
+
+                statusNode.setContent('Arrival-Date: ' + rfc822Date(new Date()) + '\n'
+                  + 'Reporting-MTA: dns; ' + request.hostname + '\n'
+                  + '\n'
+                  + 'Action: failed\n'
+                  + 'Diagnostic-Code: smtp; ' + eventData.error_code + ' ' + eventData.reason + '\n'
+                  + 'Last-Attempt-Date: ' + rfc822Date(new Date(eventData.timestamp * 1000)) + '\n'
+                  + 'Final-Recipient: rfc822; ' + eventData.raw_rcpt_to + '\n'
+                );
+
+                mixedNode.setHeader({
+                  From: 'Mail Delivery System <' + process.env.FORWARD_FROM + '>',
+                  To: process.env.FORWARD_TO,
+                  Subject: 'Mail Delivery Failure',
+                  'Message-ID': eventData.message_id
+                });
+
+                // Need to zap the current mixedNode contents each time around, otherwise it builds up
+                mixedNode.appendChild(plainNode);
+                mixedNode.appendChild(statusNode);
+
+                // Try setting an envelope (based on current headers) to get the From: To: at the top of the object
+                mixedNode.setEnvelope(mixedNode.getEnvelope());
+
+                mixedNode.build(function(err, msg) {
+                    if (err) {
+                      console.error('Failed to build bounce message: ' + err);
+                    } else {
+                      publisher.publish('queue', msg.toString());
+                    }
+                  });
+              }
+              break;
+
+            case 'delivery':
+            case 'injection':
+            case 'sms_status':
+            case 'spam_complaint':
+            case 'policy_rejection':
+            case 'delay':
+              otherCounter++;
+              break;
+            default:
+              unrecCounter++;
+              break;
+          }
+        } else if (ed.hasOwnProperty('track_event') || ed.hasOwnProperty('gen_event') || ed.hasOwnProperty('unsubscribe_event') || ed.hasOwnProperty('relay_event')) {
+          otherCounter++;
+        }
       }
-    });
+    }
+    console.log('Webhook events processed: bounce=', bounceCounter, 'other valid=', otherCounter, 'unrecognized=', unrecCounter);
 
     return response.status(200).send('OK');
   } catch (e) {
     return response.status(400).send('Invalid data: ' + e);
   }
 });
+
 
 /*
  * Helper functions
