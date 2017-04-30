@@ -70,7 +70,7 @@ subscriber.on('message', function(channel, message) {
       if (err) {
         console.error('Transmission failed: ' + JSON.stringify(err));
       } else {
-        console.log('Transmission succeeded: ' + JSON.stringify(res.body));
+        console.log('Tx OK to: ' + process.env.FORWARD_TO + ' : ' + JSON.stringify(res.body));
       }
     });
   });
