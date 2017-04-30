@@ -83,9 +83,7 @@ app.set('port', (process.env.PORT || 5000));
 
 app.use(express.static(__dirname + '/public'));
 
-app.use(bodyParser.json());
-
-// Default of 100k might be too small for many attachments
+// Default of 100k is too small for Webhooks payloads
 app.use(bodyParser.json({limit: '10mb'}));
 
 /*
