@@ -7,7 +7,7 @@ let q = require('q')
   , app = express()
   , bodyParser = require('body-parser')
   , SparkPost = require('sparkpost')
-  , sp = new SparkPost(process.env.SPARKPOST_API_KEY)
+  , sp = new SparkPost(process.env.SPARKPOST_API_KEY, {endpoint: process.env.SPARKPOST_API_URL})
   , redis = require('redis')
   , subscriber = redis.createClient(process.env.REDIS_URL, {no_ready_check: true})
   , publisher = redis.createClient(process.env.REDIS_URL, {no_ready_check: true})
@@ -32,6 +32,24 @@ if (process.env.FORWARD_FROM === undefined) {
 if (process.env.FORWARD_TO === undefined) {
   console.error('FORWARD_TO must be set');
   process.exit(1);
+}
+
+if (process.env.SPARKPOST_API_URL === undefined) {
+  console.log('Using standard Sparkpost endpoint');
+} else {
+  console.log('Using SPARKPOST_API_URL = ' + process.env.SPARKPOST_API_URL);
+  if (process.env.SPARKPOST_API_URL !== 'https://api.sparkpost.com') {
+    if (process.env.RETURN_PATH === undefined) {
+      console.error('RETURN_PATH must be set');
+      process.exit(1);
+    }
+
+    if (process.env.BINDING === undefined) {
+      console.error('BINDING must be set');
+      process.exit(1);
+    }
+    console.log('RETURN_PATH = ' + process.env.RETURN_PATH + '\tBINDING = ' + process.env.BINDING)
+  }
 }
 
 /*
@@ -64,7 +82,11 @@ subscriber.on('message', function(channel, message) {
         content: {
           email_rfc822: message
         },
-        recipients: [{address: {email: process.env.FORWARD_TO}}]
+        recipients: [{address: {email: process.env.FORWARD_TO}}],
+        return_path: process.env.RETURN_PATH,
+        metadata: {
+          binding: process.env.BINDING
+        }
       }
     }, function(err, res) {
       if (err) {
