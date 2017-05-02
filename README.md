@@ -68,4 +68,11 @@ Deploying Manually
 
         curl https://<your-app-name>.herokuapp.com/index.html
 
+## SparkPost Enterprise
+At step 5 above - manually create the following additional env variables:
 
+```bash
+heroku config:set SPARKPOST_API_URL=https://demo.sparkpostelite.com         # Example only - put your domains here
+heroku config:set RETURN_PATH=steve@demo-t.sparkpostelite.com
+heroku config:set BINDING=outbound
+```
