@@ -1,7 +1,7 @@
 SparkPost Bounce Forwarding Service
 ===================================
 
-A small Heroku service that will consume webhook POSTs for out-of-band
+A small Heroku service that will consume webhook POSTs for in-band and out-of-band
 bounces and forward them through the Transmissions API to a mailbox.
 
 Deployment
@@ -76,3 +76,9 @@ heroku config:set SPARKPOST_API_URL=https://demo.sparkpostelite.com         # Ex
 heroku config:set RETURN_PATH=steve@demo-t.sparkpostelite.com
 heroku config:set BINDING=outbound
 ```
+
+## Bounce types
+
+If you really want only one type of bounce to be reported, you could change the webhook creation in `function addWebhook(appUrl)` 
+or else edit the webhook grants after creation.
+
