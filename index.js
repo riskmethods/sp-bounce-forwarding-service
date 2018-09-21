@@ -198,9 +198,6 @@ app.post('/message', function(request, response) {
                   + 'Reason: ' + eventData.type + ', Raw reason: ' + eventData.raw_reason
                   + '\n\n'
                   + JSON.stringify(eventData, null, '  ')
-                  + '\n\n'
-                  + 'Best regards,\n'
-                  + 'riskmethods Mail Delivery System\n'
                   + '\n'
                 );
 
