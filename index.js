@@ -192,12 +192,11 @@ app.post('/message', function(request, response) {
                    , statusNode = new BuildMail('message/delivery-status')
                    , mixedNode = new BuildMail('multipart/mixed');
 
-                plainNode.setContent('This message was created automatically by the mail system.\n'
-                  + 'A message that you sent could not be delivered to one or more of its\n'
-                  + 'recipients. This is a permanent error. The following address(es) failed:\n\n'
+                plainNode.setContent('A message we sent could not be delivered to one or more of its\n'
+                  + 'recipients. The following address(es) failed:\n\n'
                   + eventData.raw_rcpt_to
                   + '\n\n'
-                  + eventData.raw_reason
+                  + 'Reason: ' + eventData.type + ', Raw reason: ' + eventData.raw_reason
                   + '\n\n'
                   + JSON.stringify(eventData, null, '  ')
                   + '\n'
@@ -213,7 +212,7 @@ app.post('/message', function(request, response) {
                 );
 
                 mixedNode.setHeader({
-                  From: 'Mail Delivery System <' + process.env.FORWARD_FROM + '>',
+                  From: 'riskmethods Mail Delivery System <' + process.env.FORWARD_FROM + '>',
                   To: process.env.FORWARD_TO,
                   Subject: 'Mail Delivery Failure',
                   'Message-ID': eventData.message_id
