@@ -192,13 +192,15 @@ app.post('/message', function(request, response) {
                    , statusNode = new BuildMail('message/delivery-status')
                    , mixedNode = new BuildMail('multipart/mixed');
 
-                plainNode.setContent('A message we sent could not be delivered to one or more of its\n'
-                  + 'recipients. The following address(es) failed:\n\n'
+                plainNode.setContent('A message we sent could not be delivered to one or more of its recipients. The following address(es) failed:\n\n'
                   + eventData.raw_rcpt_to
                   + '\n\n'
                   + 'Reason: ' + eventData.type + ', Raw reason: ' + eventData.raw_reason
                   + '\n\n'
                   + JSON.stringify(eventData, null, '  ')
+                  + '\n\n'
+                  + 'Best regards,\n'
+                  + 'riskmethods Mail Delivery System\n'
                   + '\n'
                 );
 
