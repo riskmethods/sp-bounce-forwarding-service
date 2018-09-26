@@ -195,8 +195,6 @@ app.post('/message', function(request, response) {
                 plainNode.setContent('A message we sent could not be delivered to one or more of its recipients. The following address(es) failed:\n\n'
                   + eventData.raw_rcpt_to
                   + '\n\n'
-                  + 'Reason: ' + eventData.type + ', Raw reason: ' + eventData.raw_reason
-                  + '\n\n'
                   + JSON.stringify(eventData, null, '  ')
                   + '\n'
                 );
@@ -213,7 +211,7 @@ app.post('/message', function(request, response) {
                 mixedNode.setHeader({
                   From: 'riskmethods Mail Delivery System <' + process.env.FORWARD_FROM + '>',
                   To: process.env.FORWARD_TO,
-                  Subject: 'Mail Delivery Failure',
+                  Subject: 'Mail Delivery Failure - Reason: ' + eventData.type,
                   'Message-ID': eventData.message_id
                 });
 
