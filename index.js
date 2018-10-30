@@ -38,7 +38,7 @@ if (process.env.SPARKPOST_API_URL === undefined) {
   console.log('Using standard Sparkpost endpoint');
 } else {
   console.log('Using SPARKPOST_API_URL = ' + process.env.SPARKPOST_API_URL);
-  if (process.env.SPARKPOST_API_URL !== 'https://api.sparkpost.com') {
+  if (process.env.SPARKPOST_API_URL !== 'https://api.eu.sparkpost.com') {
     if (process.env.RETURN_PATH === undefined) {
       console.error('RETURN_PATH must be set');
       process.exit(1);
