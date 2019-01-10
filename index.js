@@ -38,7 +38,7 @@ if (process.env.SPARKPOST_API_URL === undefined) {
   console.log('Using standard Sparkpost endpoint');
 } else {
   console.log('Using SPARKPOST_API_URL = ' + process.env.SPARKPOST_API_URL);
-  if (process.env.SPARKPOST_API_URL !== 'https://api.sparkpost.com') {
+  if (process.env.SPARKPOST_API_URL !== 'https://api.eu.sparkpost.com') {
     if (process.env.RETURN_PATH === undefined) {
       console.error('RETURN_PATH must be set');
       process.exit(1);
@@ -192,12 +192,8 @@ app.post('/message', function(request, response) {
                    , statusNode = new BuildMail('message/delivery-status')
                    , mixedNode = new BuildMail('multipart/mixed');
 
-                plainNode.setContent('This message was created automatically by the mail system.\n'
-                  + 'A message that you sent could not be delivered to one or more of its\n'
-                  + 'recipients. This is a permanent error. The following address(es) failed:\n\n'
+                plainNode.setContent('A message we sent could not be delivered to one or more of its recipients. The following address(es) failed:\n\n'
                   + eventData.raw_rcpt_to
-                  + '\n\n'
-                  + eventData.raw_reason
                   + '\n\n'
                   + JSON.stringify(eventData, null, '  ')
                   + '\n'
@@ -213,9 +209,9 @@ app.post('/message', function(request, response) {
                 );
 
                 mixedNode.setHeader({
-                  From: 'Mail Delivery System <' + process.env.FORWARD_FROM + '>',
+                  From: 'riskmethods Mail Delivery System <' + process.env.FORWARD_FROM + '>',
                   To: process.env.FORWARD_TO,
-                  Subject: 'Mail Delivery Failure',
+                  Subject: 'Mail Delivery Failure - Reason: ' + eventData.type,
                   'Message-ID': eventData.message_id
                 });
 
