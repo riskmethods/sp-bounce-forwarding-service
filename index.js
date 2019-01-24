@@ -211,7 +211,7 @@ app.post('/message', function(request, response) {
                 mixedNode.setHeader({
                   From: 'riskmethods Mail Delivery System <' + process.env.FORWARD_FROM + '>',
                   To: process.env.FORWARD_TO,
-                  Subject: 'Mail Delivery Failure - Reason: ' + eventData.type,
+                  Subject: 'Delivery Failure - ' + eventData.raw_rcpt_to + ' - eventData.type',
                   'Message-ID': eventData.message_id
                 });
 
