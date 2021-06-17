@@ -9,8 +9,8 @@ let q = require('q')
   , SparkPost = require('sparkpost')
   , sp = new SparkPost(process.env.SPARKPOST_API_KEY, {endpoint: process.env.SPARKPOST_API_URL})
   , redis = require('redis')
-  , subscriber = redis.createClient(process.env.REDIS_URL, {no_ready_check: true})
-  , publisher = redis.createClient(process.env.REDIS_URL, {no_ready_check: true})
+  , subscriber = redis.createClient(process.env.REDIS_URL, {tls: {rejectUnauthorized: false}, no_ready_check: true})
+  , publisher = redis.createClient(process.env.REDIS_URL, {tls: {rejectUnauthorized: false}, no_ready_check: true})
   , subscriberReady = false
   , publisherReady = false
   ;
