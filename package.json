@@ -1,6 +1,6 @@
 {
   "name": "sp-bounce-forwarding-service",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A small Heroku service that will consume webhook POSTs for out-of-band bounces and forward them through the Transmissions API to a mailbox.",
   "main": "index.js",
   "scripts": {
